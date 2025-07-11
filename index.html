@@ -912,7 +912,7 @@ if ($conn->connect_error) {
                         <?php if (!empty($bike['image'])): ?>
                         <img src="/uploads/<?= htmlspecialchars($bike['image']) ?>" alt="<?= htmlspecialchars($bike['name']) ?>" loading="lazy">
                         <?php else: ?>
-                        <img src="/images/default-bike.jpg" alt="Default bike image">
+                        <img src="bike3.jpg" alt="Default bike image">
                         <?php endif; ?>
                     </div>
                     <div class="bike-info">
@@ -932,7 +932,7 @@ if ($conn->connect_error) {
                 <?php while($bike = $bikes->fetch_assoc()): ?>
                 <div class="bike-card">
                     <div class="bike-image">
-                        <img src="<?php echo htmlspecialchars($bike['image'] ?? 'https://images.unsplash.com/photo-1511994298241-608e28f14fde?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'); ?>" alt="<?php echo htmlspecialchars($bike['name']); ?>">
+                        <img src="bike4.jpg" alt="<?php echo htmlspecialchars($bike['name']); ?>">
                     </div>
                     <div class="bike-info">
                         <h3>
