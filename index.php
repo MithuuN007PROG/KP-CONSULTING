@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="KP Consulting - Expert bike buying, selling, and consulting services. Find your perfect bike or get top value for your current one.">
+    <meta name="keywords" content="bike consulting, buy bike, sell bike, bike experts, bike valuation">
+    <meta name="author" content="KP Consulting">
+    <title>KP Consulting | Bike Buying, Selling & Consulting Experts</title>
+     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Orbitron:wght@500;600;700&display=swap" rel="stylesheet">
+
+</head>
+
+
+<body>
+    <!-- Header & Navigation -->
+    <header id="header">
+        <div class="container">
+            <nav class="navbar">
+                <a href="#" class="logo">
+                    <i class="fas fa-bike logo-icon"></i> KP <span>Consulting</span>
+                </a>
+                <ul class="nav-links">
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#services">Services</a></li>
+                    <li><a href="#featured">Featured Bikes</a></li>
+                    <li><a href="#testimonials">Feedback</a></li>
+
+                    <li><a href="#contact">Contact</a></li>
+                    <li class="header-search">
+    <form method="get" action="#featured">
+        <input type="text" placeholder="Search bikes..." id="headerSearch" name="search">
+        <button type="submit"><i class="fas fa-search"></i></button>
+    </form>
+</li>
+                </ul>
+                <div class="hamburger">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Expert Bike Consulting Services</h1>
+                <p>We help you buy the perfect bike, sell your current one for top value, and provide expert consulting to meet all your bike needs.</p>
+                <div class="hero-btns">
+                    <a href="#featured" class="btn">Browse Bikes</a>
+                    <a href="#services" class="btn btn-outline">Our Services</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+   <!-- Featured Bikes Section -->
+<section class="section featured" id="featured">
+    <div class="container">
+        <h2 class="section-title">Find Your Perfect Ride</h2>
+        
+        <!-- Search Bar -->
+        <div class="search-container">
+            <form method="get" action="#featured" class="search-form">
+                <div class="search-input-group">
+                    <input type="text" name="search" id="bikeSearch" 
+                           placeholder="Search bikes by name, model or specs..." 
+                           value="<?= isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '' ?>"
+                           class="search-input">
+                    <button type="submit" class="search-btn">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <?php if(isset($_GET['search'])): ?>
+                    <a href="#featured" class="clear-btn">Clear</a>
+                <?php endif; ?>
+            </form>
+        </div>
+
+        <!-- Sorting Controls -->
+        <div class="sort-container">
+            <form method="get" action="#featured">
+                <label for="sort">Sort by:</label>
+                <select name="sort" id="sort" onchange="this.form.submit()">
+                    <option value="default" <?= (!isset($_GET['sort']) || $_GET['sort'] == 'default') ? 'selected' : '' ?>>Default</option>
+                    <option value="price_asc" <?= (isset($_GET['sort']) && $_GET['sort'] == 'price_asc') ? 'selected' : '' ?>>Price (Low to High)</option>
+                    <option value="price_desc" <?= (isset($_GET['sort']) && $_GET['sort'] == 'price_desc') ? 'selected' : '' ?>>Price (High to Low)</option>
+                    <option value="name_asc" <?= (isset($_GET['sort']) && $_GET['sort'] == 'name_asc') ? 'selected' : '' ?>>Name (A-Z)</option>
+                    <option value="name_desc" <?= (isset($_GET['sort']) && $_GET['sort'] == 'name_desc') ? 'selected' : '' ?>>Name (Z-A)</option>
+                </select>
+                <?php if(isset($_GET['search'])): ?>
+                    <input type="hidden" name="search" value="<?= htmlspecialchars($_GET['search']) ?>">
+                <?php endif; ?>
+            </form>
+        </div>
+
+        <div class="bikes-grid">
+            <?php
+            // Database connection
+            $conn = new mysqli("localhost", "root", "", "kp_bikes");
+            if ($conn->connect_error) {
+                die("Connection failed: " . $conn->connect_error);
+            }
+
+            // Build query based on search and sort
+            $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+            $sort = isset($_GET['sort']) ? $_GET['sort'] : 'default';
+            
+            $query = "SELECT * FROM bikes WHERE status='Available'";
+            
+            // Add search filter if exists
+            if (!empty($search)) {
+                $search_term = "%" . $conn->real_escape_string($search) . "%";
+                $query .= " AND (name LIKE '$search_term' OR model LIKE '$search_term' OR specs LIKE '$search_term')";
+            }
+            
+            // Add sorting
+            switch($sort) {
+                case 'price_asc':
+                    $query .= " ORDER BY price ASC";
+                    break;
+                case 'price_desc':
+                    $query .= " ORDER BY price DESC";
+                    break;
+                case 'name_asc':
+                    $query .= " ORDER BY name ASC";
+                    break;
+                case 'name_desc':
+                    $query .= " ORDER BY name DESC";
+                    break;
+                default:
+                    $query .= " ORDER BY id DESC"; // Default sorting by newest first
+            }
+            
+            $result = $conn->query($query);
+            
+            if ($result->num_rows > 0) {
+                while($bike = $result->fetch_assoc()) {
+                    $whatsapp_text = urlencode("🚲 Bike Inquiry:\nName: ".$bike['name']."\nModel: ".$bike['model']."\nPrice: ₹".number_format($bike['price'], 2)."\nSpecs: ".$bike['specs']);
+                    ?>
+                    <div class="bike-card">
+                        <div class="bike-image">
+                            <?php if(!empty($bike['image'])): ?>
+                                <img src="uploads/<?= htmlspecialchars($bike['image']) ?>" alt="<?= htmlspecialchars($bike['name']) ?>">
+                            <?php else: ?>
+                                <div style="background:#f5f5f5;height:100%;display:flex;align-items:center;justify-content:center;">
+                                    <i class="fas fa-bicycle" style="font-size:3rem;color:#ccc;"></i>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="bike-info">
+                            <h3><?= htmlspecialchars($bike['name']) ?></h3>
+                            <p><?= htmlspecialchars($bike['specs']) ?></p>
+                            <div class="bike-price">₹<?= number_format($bike['price'], 2) ?></div>
+                            <a href="https://wa.me/916380899227?text=<?= $whatsapp_text ?>" class="btn" target="_blank">Inquire Now</a>
+                        </div>
+                    </div>
+                    <?php
+                }
+            } else {
+                echo '<p class="no-results">No bikes found. Please try a different search.</p>';
+            }
+            
+            $conn->close();
+            ?>
+        </div>
+    </div>
+</section>
+    <!-- About Section -->
+    <section class="section about" id="about">
+        <div class="container">
+            <h2 class="section-title">About Us</h2>
+            <div class="about-content">
+                <div class="about-text">
+                    <h2>Your Trusted Bike Experts</h2>
+                    <p>KP Consulting was founded in 2015 with a simple mission: to make the bike buying and selling process easier, more transparent, and more rewarding for bikers of all levels.</p>
+                    <p>Our team of certified bike consultants brings together decades of industry experience, technical knowledge, and a genuine passion for riding. We're not just consultants - we're bikers ourselves who understand what matters most to riders.</p>
+                    <p>Whether you're looking for your first bike, upgrading to a professional model, or selling a cherished ride, we provide the expertise and personalized service you deserve.</p>
+                    <a href="#services" class="btn">Explore Our Services</a>
+                </div>
+                <div class="about-image">
+                    <img src="kpteam.jpg" alt="KP Consulting Team">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="section services" id="services">
+        <div class="container">
+            <h2 class="section-title">Our Services</h2>
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h3>Bike Buying</h3>
+                    <p>We'll help you find the perfect bike for your needs, budget, and riding style. From selection to negotiation, we handle the entire process.</p>
+                    <a href="#contact" class="btn btn-outline">Learn More</a>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-rupee-sign"></i>
+                    </div>
+                    <h3>Bike Selling</h3>
+                    <p>Get top Rupees for your bike with our professional selling service. We handle valuation, marketing, and negotiations to maximize your return.</p>
+                    <a href="#contact" class="btn btn-outline">Learn More</a>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <h3>Bike Consulting</h3>
+                    <p>Our expert consultations cover everything from bike fit and components to maintenance plans and upgrade strategies.</p>
+                    <a href="#contact" class="btn btn-outline">Learn More</a>
+                </div>
+            </div>
+        </div>
+    </section>
+<section class="testimonials">
+  <h2>What Our Users Say</h2>
+  <div class="testimonials-grid">
+    <div class="feedback-section">
+      <div class="slider-container">
+        <div class="feedback-slider">
+          <div class="feedback-item">
+            <div class="feedback-header">
+              <img src="customer1.jpg" alt="Jane Doe Photo" class="user-photo">
+              <div class="star-rating" data-rating="5">
+                <span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span><span class="star filled">★</span>
+              </div>
+            </div>
+            <p>"This product changed the way I work! Highly recommend it to everyone, it's truly a game-changer."</p>
+            <p class="testimonial-author">- Jane Doe</p>
+          </div>
+        </div>
+      </div>
+      <!-- ADD THESE SLIDER DOTS -->
+      <div class="slider-dots">
+        <span class="dot active"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+    
+    <!-- Why Choose Us Section -->
+    <section class="section why-us" id="why-us">
+        <div class="container">
+            <h2 class="section-title">Why Choose KP Consulting</h2>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-award"></i>
+                    </div>
+                    <h3>Industry Expertise</h3>
+                    <p>Our consultants have 10+ years experience in the bike industry with certifications from leading manufacturers.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-hand-holding-usd"></i>
+                    </div>
+                    <h3>Best Value Guarantee</h3>
+                    <p>We negotiate the best prices and terms, saving you money whether you're buying or selling.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h3>Personalized Service</h3>
+                    <p>One-on-one consultations tailored to your specific needs and goals.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Trust & Transparency</h3>
+                    <p>No hidden fees or pressure - just honest advice you can trust.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Contact Section -->
+    <section class="section contact" id="contact">
+        <div class="container">
+            <h2 class="section-title">Contact Us</h2>
+            <div class="contact-container">
+                <div class="contact-info">
+                    <h3>Get In Touch</h3>
+                    <div class="contact-details">
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="contact-text">
+                                <h4>Location</h4>
+                                <p>KP Consulting, Cheran Nagar, Coimbatore</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <i class="fas fa-phone-alt"></i>
+                            </div>
+                            <div class="contact-text">
+                                <h4>Phone</h4>
+                                <p><a href="tel:+919944339355">+91 99443 39355</a></p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div class="contact-text">
+                                <h4>Email</h4>
+                                <p><a href="mailto:kpconsulting@gmail.com">kpconsulting@gmail.com</a></p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="contact-text">
+                                <h4>Hours</h4>
+                                <p>Monday-Sunday: 10am-8pm</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="contact-text">
+                                <h4>Our Location</h4>
+                                <p>
+                                    <a href="https://maps.app.goo.gl/HUz2aTAfZa3QJ7DV8" target="_blank">
+                                        View on Google Maps <i class="fas fa-external-link-alt"></i>
+                                    </a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3>Follow Us</h3>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                <div class="contact-form">
+                    <h3>Send Us a Message</h3>
+                    <form id="contactForm" action="https://formspree.io/f/xovwlodb" method="POST">
+                        <div class="form-group">
+                            <label for="name">Your Name</label>
+                            <input type="text" id="name" name="name" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Your Email</label>
+                            <input type="email" id="email" name="_replyto" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" id="phone" name="phone" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="subject">Subject</label>
+                            <select id="subject" name="subject" class="form-control" required>
+                                <option value="">Select a subject</option>
+                                <option value="buying">Bike Buying Inquiry</option>
+                                <option value="selling">Bike Selling Inquiry</option>
+                                <option value="consulting">Consulting Services</option>
+                                <option value="other">Other Question</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Your Message</label>
+                            <textarea id="message" name="message" class="form-control" required></textarea>
+                        </div>
+                        <input type="hidden" name="_subject" value="New Contact Form Submission">
+                        <input type="text" name="_gotcha" style="display:none">
+                        <button type="submit" class="btn">Send Message</button>
+                        
+                    </form>
+                </div>
+            </div>
+            
+        
+        <!-- Shop Location Section -->
+        <div class="shop-location">
+            <div class="shop-info">
+                <h3>Visit Our Shop</h3>
+                <div class="shop-details">
+                    <div class="shop-photo-container">
+                        <div class="shop-photo">
+                            <img src="shop-photo.jpg" alt="KP Consulting Bike Shop">
+                            <a href="https://maps.app.goo.gl/HUz2aTAfZa3QJ7DV8" class="directions-overlay" target="_blank">
+                                <i class="fas fa-directions"></i>
+                                <span>View Larger & Get Directions</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="location-info">
+                        <h4>KP Consulting Bike Shop</h4>
+                        <p><i class="fas fa-map-marker-alt"></i> Cheran Nagar, Coimbatore, Tamil Nadu</p>
+                        <p><i class="fas fa-clock"></i> Open: 10am - 8pm (Mon-Sun)</p>
+                        <p><i class="fas fa-phone"></i> +91 99443 39355</p>
+                        <p><i class="fas fa-envelope"></i> kpconsulting@gmail.com</p>
+                        <div class="location-buttons">
+                            <a href="https://maps.app.goo.gl/HUz2aTAfZa3QJ7DV8" class="btn btn-primary" target="_blank">
+                                <i class="fas fa-directions"></i> Get Directions
+                            </a>
+                            <a href="tel:+919944339355" class="btn btn-outline">
+                                <i class="fas fa-phone"></i> Call Now
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="map-container">
+                <iframe src="https://www.google.com/maps/embed?pb=!4v1753187279431!6m8!1m7!1shBjhG9Qw24wPAOAr7GU8Tw!2m2!1d11.05162243249844!2d76.94588548401168!3f23.659784918686398!4f-3.7353737267507654!5f0.7820865974627469" 
+                        width="600" height="450" style="border:0;" allowfullscreen="" 
+                        loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            </div>
+        </div>
+    </div>
+</section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-col">
+                    <h3>KP Consulting</h3>
+                    <p>Your trusted partner for all bike-related services. We help bikers make informed decisions when buying, selling, or upgrading their bikes.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h3>Quick Links</h3>
+                    <ul class="footer-links">
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#about">About Us</a></li>
+                        <li><a href="#services">Services</a></li>
+                        <li><a href="#featured">Featured Bikes</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h3>Services</h3>
+                    <ul class="footer-links">
+                        <li><a href="#services">Bike Buying</a></li>
+                        <li><a href="#services">Bike Selling</a></li>
+                        <li><a href="#services">Bike Consulting</a></li>
+                        <li><a href="#services">Valuation Services</a></li>
+                        <li><a href="#services">Custom Builds</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h3>Newsletter</h3>
+                    <p>Subscribe to get updates on new arrivals and special offers.</p>
+                    <form class="newsletter-form">
+                        <input type="email" placeholder="Your Email" required>
+                        <button type="submit" class="btn">Subscribe</button>
+                    </form>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 KP Consulting. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+    <script src="script.js"></script>
